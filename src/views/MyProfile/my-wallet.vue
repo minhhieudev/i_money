@@ -30,7 +30,7 @@
         </div>
         <div class="flex flex-col ml-2">
           <div class="text-lg font-bold">Cash</div>
-          <div class="text-sm">{{ currentBalanceNumber }} đ</div>
+          <div class="text-sm">{{ currentBalanceFormatted }} đ</div>
         </div>
         <font-awesome-icon
           :icon="ellipsisV"
@@ -78,6 +78,7 @@
 </template>
 
 <script>
+import { mapState } from "vuex"; // Import mapState from Vuex
 import {
   faArrowLeft,
   faSearch,
@@ -106,6 +107,18 @@ export default {
       ],
       walletColor: ["blue-500", "yellow-500", "purple-600", "pink-500"],
     };
+  },
+  computed: {
+    ...mapState(["currentBalance"]), // Map currentBalance from Vuex store
+    currentBalanceFormatted() {
+      // Format the currentBalance as needed
+      return new Intl.NumberFormat("vi-VN", {
+        style: "currency",
+        currency: "VND",
+      })
+        .format(this.currentBalance)
+        .replace("₫", "");
+    },
   },
   methods: {
     // ... other methods ...

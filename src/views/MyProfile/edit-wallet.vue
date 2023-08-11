@@ -48,14 +48,17 @@
             <input
               ref="balanceInput"
               type="text"
-              v-model="Balance"
+              v-model="currentBalanceFormatted"
               @input="handleInput"
               @keydown="handleKeyDown"
               placeholder="0Đ"
               class="border-0 border-b-2 border-gray-300 text-2xl focus:outline-none font-semibold text-green-500"
               :style="{ width: `${inputWidth}px` }"
             />
-            <div v-if="Balance" class="text-xl font-bold ml-2 text-green-500">
+            <div
+              v-if="currentBalanceFormatted"
+              class="text-xl font-bold ml-2 text-green-500"
+            >
               Đ
             </div>
           </div>
@@ -173,11 +176,33 @@ import {
 import { faTrashAlt } from "@fortawesome/free-solid-svg-icons";
 
 import { FontAwesomeIcon } from "@fortawesome/vue-fontawesome";
+import { mapState } from "vuex"; // Import mapState from Vuex
 
 export default {
   name: "EditWallet",
   components: {
     FontAwesomeIcon,
+  },
+  computed: {
+    ...mapState(["currentBalance"]), // Map currentBalance from Vuex store
+    currentBalanceFormatted: {
+      get() {
+        // Format the currentBalance as needed
+        return new Intl.NumberFormat("vi-VN", {
+          style: "currency",
+          currency: "VND",
+        })
+          .format(this.currentBalance)
+          .replace("₫", "");
+      },
+      set(value) {
+        // Convert and update currentBalance when input changes
+        this.$store.commit(
+          "updateCurrentBalance",
+          parseFloat(value.replace(/[^\d]/g, "")) || 0
+        );
+      },
+    },
   },
   data() {
     return {
@@ -189,15 +214,12 @@ export default {
       notificationEnabled: false,
       notificationEnabled1: false,
       notificationEnabled2: false,
-      Balance: "", // Biến để lưu giá trị nhập vào ô input
-      currentBalance: 0,
       inputWidth: "3rem",
     };
   },
   methods: {
     goBack() {
-      console.log(this.Balance);
-      console.log(this.currentBalance);
+      console.log(this.currentBalanceFormatted);
     },
     closeEditWallet() {
       // Your logic to close edit wallet page
@@ -205,15 +227,17 @@ export default {
 
     handleInput() {
       // Xử lý giá trị nhập vào ô input
-      this.Balance = this.formatCurrency(this.Balance);
-      this.currentBalance = parseFloat(this.Balance.replace(/[^\d]/g, "")) || 0;
-      // Lấy chiều dài của chuỗi giá trị sau khi đã định dạng
-      const formattedValueLength = this.Balance.length + 1; // +1 để tính thêm chữ 'Đ'
-      // Tính toán độ rộng dựa trên chiều dài của chuỗi giá trị
+      this.currentBalanceFormatted = this.formatCurrency(
+        this.currentBalanceFormatted
+      );
+      const formattedValueLength = this.currentBalanceFormatted.length + 1; // +1 để tính thêm chữ 'Đ'
       this.inputWidth = Math.min(formattedValueLength * 10, 120);
       this.$nextTick(() => {
         // Đặt lại vị trí con trỏ sau khi định dạng số
-        this.setCaretPosition(this.$refs.balanceInput, this.Balance.length - 1);
+        this.setCaretPosition(
+          this.$refs.balanceInput,
+          this.currentBalanceFormatted.length - 1
+        );
       });
     },
     handleKeyDown(event) {
